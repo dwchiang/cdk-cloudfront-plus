@@ -18,14 +18,20 @@ const stack = new cdk.Stack(app, 'cf-authentication-by-oauth2-demo');
 
 // create the cloudfront distribution with extension(s)
 const OAuth2AuthorizationCodeGrant = new extensions.OAuth2AuthorizationCodeGrant(stack, 'OAuth2AuthorizationCodeGrant', {
+  clientDomain: process.env.CLIENT_DOMAIN as string,
   clientId: process.env.CLIENT_ID as string,
   clientSecret: process.env.CLIENT_SECRET as string,
-  clientDomain: process.env.CLIENT_DOMAIN as string,
-  clientPublicKey: new Buffer(process.env.CLIENT_PUBLIC_KEY as string).toString('base64'),
-  callbackPath: process.env.CALLBACK_PATH as string,
-  jwtArgorithm: process.env.JWT_ARGORITHM as string,
+  clientPublicKey: Buffer.from(process.env.CLIENT_PUBLIC_KEY as string).toString('base64'),
+
   authorizeUrl: process.env.AUTHORIZE_URL as string,
-  authorizeParams: new Buffer(process.env.AUTHORIZE_PARAMS as string).toString('base64'),
+  authorizeParams: Buffer.from(process.env.AUTHORIZE_PARAMS as string).toString('base64'),
+  authorizeRedirecturiShouldMatch: process.env.AUTHORIZE_REDIRECTURI_SHOULD_MATCH as unknown as boolean,
+
+  callbackPath: process.env.CALLBACK_PATH as string,
+
+  jwtArgorithm: process.env.JWT_ARGORITHM as string,
+  jwtTokenPath: process.env.JWT_TOKEN_PATH as string,
+
   debugEnable: process.env.DEBUG_ENABLE as unknown as boolean,
 });
 

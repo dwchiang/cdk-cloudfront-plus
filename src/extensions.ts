@@ -395,14 +395,20 @@ export class SimpleLambdaEdge extends Custom {
 };
 
 export interface OAuth2AuthorizationCodeGrantProps {
+  readonly clientDomain: string;
   readonly clientId: string;
   readonly clientSecret: string;
-  readonly clientDomain: string;
   readonly clientPublicKey: string;
-  readonly callbackPath: string;
-  readonly jwtArgorithm: string;
+
   readonly authorizeUrl: string;
   readonly authorizeParams: string;
+  readonly authorizeRedirecturiShouldMatch: boolean;
+
+  readonly callbackPath: string;
+
+  readonly jwtArgorithm: string;
+  readonly jwtTokenPath: string;
+
   readonly debugEnable: boolean;
 }
 
@@ -417,14 +423,20 @@ export class OAuth2AuthorizationCodeGrant extends Custom {
       runtime: lambda.Runtime.NODEJS_14_X,
       bundling: {
         define: {
+          'process.env.CLIENT_DOMAIN': JSON.stringify(props.clientDomain),
           'process.env.CLIENT_ID': JSON.stringify(props.clientId),
           'process.env.CLIENT_SECRET': JSON.stringify(props.clientSecret),
-          'process.env.CLIENT_DOMAIN': JSON.stringify(props.clientDomain),
           'process.env.CLIENT_PUBLIC_KEY': JSON.stringify(props.clientPublicKey),
-          'process.env.CALLBACK_PATH': JSON.stringify(props.callbackPath),
-          'process.env.JWT_ARGORITHM': JSON.stringify(props.jwtArgorithm),
+
           'process.env.AUTHORIZE_URL': JSON.stringify(props.authorizeUrl),
           'process.env.AUTHORIZE_PARAMS': JSON.stringify(props.authorizeParams),
+          'process.env.AUTHORIZE_REDIRECTURI_SHOULD_MATCH': JSON.stringify(props.authorizeRedirecturiShouldMatch),
+
+          'process.env.CALLBACK_PATH': JSON.stringify(props.callbackPath),
+
+          'process.env.JWT_ARGORITHM': JSON.stringify(props.jwtArgorithm),
+          'process.env.JWT_TOKEN_PATH': JSON.stringify(props.jwtTokenPath),
+
           'process.env.DEBUG_ENABLE': JSON.stringify(props.debugEnable),
         },
       },

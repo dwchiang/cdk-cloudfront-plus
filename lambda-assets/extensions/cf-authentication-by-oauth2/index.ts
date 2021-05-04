@@ -145,10 +145,13 @@ function loginCallback(config, request, callback) {
     client_secret: config.CLIENT_SECRET,
     redirect_uri: `https://${headers.host[0].value}${config.CALLBACK_PATH}`,
   });
+  if (config.DEBUG_ENABLE) console.log("loginCallback: postData = (next line)");
+  if (config.DEBUG_ENABLE) console.log(postData);
+
   const postOptions = {
     host: config.CLIENT_DOMAIN,
     port: 443,
-    path: "/oauth/token",
+    path: config.JWT_TOKEN_PATH,
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -156,8 +159,9 @@ function loginCallback(config, request, callback) {
     },
   };
   const req = https.request(postOptions, (res) => {
-    if (config.DEBUG_ENABLE) console.log("loginCallback: res.statusCode = " + res.statusCode);
+    if (config.DEBUG_ENABLE) console.log("loginCallback: res.statusCode = " + res.statusCode + ", res.statusText = " + res.statusText);
     if (res.statusCode >= 300) {
+      if (config.DEBUG_ENABLE) console.log("loginCallback: res.statusCode >= 300. You may want to check IdP logs.");
       return callback(
         null,
         respond(
@@ -174,13 +178,13 @@ function loginCallback(config, request, callback) {
     res.on("end", () => {
       try {
         const json = JSON.parse(body);
-        if (config.DEBUG_ENABLE) console.log("loginCallback: parse body = (next line)");
+        if (config.DEBUG_ENABLE) console.log("loginCallback: on end, parse body = (next line)");
         if (config.DEBUG_ENABLE) console.log(json);
         const token = json.id_token;
-        if (config.DEBUG_ENABLE) console.log("loginCallback: token = " + token);
+        if (config.DEBUG_ENABLE) console.log("loginCallback: on end, token = " + token);
 
         if (!token) {
-          if (config.DEBUG_ENABLE) console.log("loginCallback: no token!");
+          if (config.DEBUG_ENABLE) console.log("loginCallback: on end, no token!");
           return callback(
             null,
             respond(401, "Unauthorized", "Unauthorized", body)
@@ -189,7 +193,7 @@ function loginCallback(config, request, callback) {
 
         // store this in a cookie, then redirect the user
         const dest = `https://${headers.host[0].value}${params.dest || "/"}`;
-        if (config.DEBUG_ENABLE) console.log("loginCallback: redirect to dest = " + dest + " with session token");
+        if (config.DEBUG_ENABLE) console.log("loginCallback: on end, redirect to dest = " + dest + " with session token");
 
         callback(
           null,
@@ -233,7 +237,7 @@ function redirectIfNotAuthenticated(config, request, callback) {
   const encodedRedirectUrl = encodeURIComponent(
     request.querystring ? `${request.uri}?${request.querystring}` : request.uri
   );
-  const callbackUrl = `https://${headers.host[0].value}${config.CALLBACK_PATH}?dest=${encodedRedirectUrl}`;
+  const callbackUrl = (config.AUTHORIZE_REDIRECTURI_SHOULD_MATCH) ? `https://${headers.host[0].value}${config.CALLBACK_PATH}` : `https://${headers.host[0].value}${config.CALLBACK_PATH}?dest=${encodedRedirectUrl}`;
   const encodedCallback = encodeURIComponent(callbackUrl);
   const redirectUrl = `${config.AUTHORIZE_URL}${config.AUTHORIZE_PARAMS}&client_id=${config.CLIENT_ID}&redirect_uri=${encodedCallback}`;
 
@@ -255,17 +259,37 @@ function allowPublicPaths(config, request, callback) {
   }
 }
 
+function getBoolean(value){
+  switch(value){
+       case true:
+       case "true":
+       case 1:
+       case "1":
+       case "on":
+       case "yes":
+           return true;
+       default: 
+           return false;
+   }
+}
+
 export function handler(event: any, context: any, callback: any) {
   const config = {
+    CLIENT_DOMAIN: process.env.CLIENT_DOMAIN,
     CLIENT_ID: process.env.CLIENT_ID,
     CLIENT_SECRET: process.env.CLIENT_SECRET,
-    CLIENT_DOMAIN: process.env.CLIENT_DOMAIN,
-    CLIENT_PUBLIC_KEY: new Buffer(process.env.CLIENT_PUBLIC_KEY, 'base64').toString(),
-    CALLBACK_PATH: process.env.CALLBACK_PATH,
-    JWT_ARGORITHM: process.env.JWT_ARGORITHM,
+    CLIENT_PUBLIC_KEY: Buffer.from(process.env.CLIENT_PUBLIC_KEY, 'base64').toString(),
+
     AUTHORIZE_URL: process.env.AUTHORIZE_URL,
-    AUTHORIZE_PARAMS: new Buffer(process.env.AUTHORIZE_PARAMS, 'base64').toString(),
-    DEBUG_ENABLE: process.env.DEBUG_ENABLE,
+    AUTHORIZE_PARAMS: Buffer.from(process.env.AUTHORIZE_PARAMS, 'base64').toString(),
+    AUTHORIZE_REDIRECTURI_SHOULD_MATCH: getBoolean(process.env.AUTHORIZE_REDIRECTURI_SHOULD_MATCH),
+
+    CALLBACK_PATH: process.env.CALLBACK_PATH,
+
+    JWT_ARGORITHM: process.env.JWT_ARGORITHM,
+    JWT_TOKEN_PATH: process.env.JWT_TOKEN_PATH,
+
+    DEBUG_ENABLE: getBoolean(process.env.DEBUG_ENABLE),
   };
 
   const request = event.Records[0].cf.request;
@@ -273,6 +297,8 @@ export function handler(event: any, context: any, callback: any) {
   if (config.DEBUG_ENABLE) console.log("Event: %j", event);
   if (config.DEBUG_ENABLE) console.log("Context: %j", context);
   if (config.DEBUG_ENABLE) console.log("request URI = ", request.uri);
+  console.log("config.DEBUG_ENABLE = " + config.DEBUG_ENABLE);
+  if (config.DEBUG_ENABLE) console.log("config.AUTHORIZE_REDIRECTURI_SHOULD_MATCH = " + config.AUTHORIZE_REDIRECTURI_SHOULD_MATCH);
 
   if (
     !allowPublicPaths(config, request, callback) &&

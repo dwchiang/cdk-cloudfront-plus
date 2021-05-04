@@ -475,6 +475,7 @@ new OAuth2AuthorizationCodeGrant(scope: Construct, id: string, props: OAuth2Auth
 * **id** (<code>string</code>)  *No description*
 * **props** (<code>[OAuth2AuthorizationCodeGrantProps](#cdk-cloudfront-plus-oauth2authorizationcodegrantprops)</code>)  *No description*
   * **authorizeParams** (<code>string</code>)  *No description* 
+  * **authorizeRedirecturiShouldMatch** (<code>boolean</code>)  *No description* 
   * **authorizeUrl** (<code>string</code>)  *No description* 
   * **callbackPath** (<code>string</code>)  *No description* 
   * **clientDomain** (<code>string</code>)  *No description* 
@@ -483,6 +484,7 @@ new OAuth2AuthorizationCodeGrant(scope: Construct, id: string, props: OAuth2Auth
   * **clientSecret** (<code>string</code>)  *No description* 
   * **debugEnable** (<code>boolean</code>)  *No description* 
   * **jwtArgorithm** (<code>string</code>)  *No description* 
+  * **jwtTokenPath** (<code>string</code>)  *No description* 
 
 
 
@@ -752,6 +754,7 @@ Name | Type | Description
 Name | Type | Description 
 -----|------|-------------
 **authorizeParams** | <code>string</code> | <span></span>
+**authorizeRedirecturiShouldMatch** | <code>boolean</code> | <span></span>
 **authorizeUrl** | <code>string</code> | <span></span>
 **callbackPath** | <code>string</code> | <span></span>
 **clientDomain** | <code>string</code> | <span></span>
@@ -760,6 +763,7 @@ Name | Type | Description
 **clientSecret** | <code>string</code> | <span></span>
 **debugEnable** | <code>boolean</code> | <span></span>
 **jwtArgorithm** | <code>string</code> | <span></span>
+**jwtTokenPath** | <code>string</code> | <span></span>
 
 
 
